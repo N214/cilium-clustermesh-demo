@@ -746,7 +746,7 @@ envoyConfig:
 ingressController:
   # -- Enable cilium ingress controller
   # This will automatically set enable-envoy-config as well.
-  enabled: false
+  enabled: true
   # -- Set cilium ingress controller to be the default ingress controller
   # This will let cilium ingress controller route entries without ingress class set
   default: false
@@ -754,7 +754,7 @@ ingressController:
   # Supported values: shared, dedicated
   # For granular control, use the following annotations on the ingress resource:
   # "ingress.cilium.io/loadbalancer-mode: dedicated" (or "shared").
-  loadbalancerMode: dedicated
+  loadbalancerMode: shared
   # -- Enforce https for host having matching TLS host in Ingress.
   # Incoming traffic to http listener will return 308 http error code with respective location in header.
   enforceHttps: true
@@ -791,7 +791,7 @@ ingressController:
     # -- Annotations to be added for the shared LB service
     annotations: {}
     # -- Service type for the shared LB service
-    type: LoadBalancer
+    type: NodePort
     # @schema
     # type: [null, integer]
     # @schema
@@ -1695,7 +1695,7 @@ hubble:
     ingress:
       enabled: true
       annotations:
-        kubernetes.io/ingress.class: nginx
+        kubernetes.io/ingress.class: cilium
       # kubernetes.io/tls-acme: "true"
       className: ""
       hosts:
