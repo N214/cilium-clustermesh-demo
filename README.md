@@ -143,3 +143,105 @@ ubuntu@vm:~/cilium-clustermesh-demo$ cilium clustermesh status --context $CLUSTE
 ```
 
 ## Test clustermesh
+
+Now deploy the manifests inside the deployment folder.
+```bash
+# Cluster 1
+ubuntu@vm:~/cilium-clustermesh-demo$ kubectl apply -f deployments/deployment-eu.yaml
+deployment.apps/hello-world created
+configmap/nginx-config created
+deployment.apps/busybox-deployment created
+service/hello-world created
+
+# Cluster 2
+ubuntu@vm:~/cilium-clustermesh-demo$ kubectl apply -f deployments/deployment-us.yaml
+deployment.apps/hello-world created
+configmap/nginx-config created
+deployment.apps/busybox-deployment created
+service/hello-world created
+```
+
+Execute the command below in cluster1, it should give you "Hello world from EU!" because EU has been deployed in cluster1 and we're executing from cluster1
+```bash
+ubuntu@vm:~/cilium-clustermesh-demo$ kubectl exec -it deployments/busybox-deployment -- /bin/sh -c 'for i in $(seq 1 10); do wget -qO- hello-world:80; echo ""; done'
+{"message": "Hello world from EU!"}
+{"message": "Hello world from EU!"}
+{"message": "Hello world from EU!"}
+{"message": "Hello world from EU!"}
+{"message": "Hello world from EU!"}
+{"message": "Hello world from EU!"}
+{"message": "Hello world from EU!"}
+{"message": "Hello world from EU!"}
+{"message": "Hello world from EU!"}
+{"message": "Hello world from EU!"}
+```
+
+Execute the command below in cluster2, it should give you "Hello world from US!" because US has been deployed in the second cluster and we're executing from cluster2
+```bash
+ubuntu@vm:~/cilium-clustermesh-demo$ kubectl exec -it deployments/busybox-deployment -- /bin/sh -c 'for i in $(seq 1 10); do wget -qO- hello-world:80; echo ""; done'
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+
+```
+
+### Cilium Loadbalancing
+Since both clusters are connected, with the same service name, I should be able to loadbalance between them using Cilium clustermesh. 
+```bash
+# Add this annotation to both clusters
+ubuntu@vm:~/cilium-clustermesh-demo$ kubectl annotate service hello-world service.cilium.io/global="true"
+
+# Now I should be able to see EU and NA, no matter from which cluster I execute my command
+ubuntu@vm:~/cilium-clustermesh-demo$ kubectl exec -it deployments/busybox-deployment -- /bin/sh -c 'for i in $(seq 1 10); do wget -qO- hello-world:80; echo ""; done'
+{"message": "Hello world from Europe!"}
+{"message": "Hello world from Europe!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from Europe!"}
+{"message": "Hello world from Europe!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from Europe!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from Europe!"}
+```
+
+### Cilium fault tolerant cross cluster load balancing.
+
+Adding the annotation below from the cluster1 will make service in the cluster1 the primary one. So all traffic goes to him, however, in case the service in cluster1 became unavailable, all traffic should be redirected to cluster2.
+
+```bash
+# From Cluster1
+ubuntu@vm:~/cilium-clustermesh-demo$ kubectl annotate service hello-world service.cilium.io/affinity="local"
+ubuntu@vm:~/cilium-clustermesh-demo$ kubectl exec -it deployments/busybox-deployment -- /bin/sh -c 'for i in $(seq 1 10); do wget -qO- hello-world:80; echo ""; done'
+{"message": "Hello world from Europe!"}
+{"message": "Hello world from Europe!"}
+{"message": "Hello world from Europe!"}
+{"message": "Hello world from Europe!"}
+{"message": "Hello world from Europe!"}
+{"message": "Hello world from Europe!"}
+{"message": "Hello world from Europe!"}
+{"message": "Hello world from Europe!"}
+{"message": "Hello world from Europe!"}
+{"message": "Hello world from Europe!"}
+
+ubuntu@vm:~/cilium-clustermesh-demo$ kubectl scale deployment hello-world --replicas 0
+ubuntu@vm:~/cilium-clustermesh-demo$ kubectl exec -it deployments/busybox-deployment -- /bin/sh -c 'for i in $(seq 1 10); do wget -qO- hello-world:80; echo ""; done'
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+{"message": "Hello world from US!"}
+
+```
