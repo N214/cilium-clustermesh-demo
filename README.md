@@ -117,6 +117,7 @@ ubuntu@vm:~/cilium-clustermesh-demo$ cilium clustermesh connect --context $CLUST
 ✅ Connected cluster kind-cilium and kind-cilium-secondary!
 
 # Double check
+# Cluster 1
 ubuntu@vm:~/cilium-clustermesh-demo$ cilium clustermesh status --context $CLUSTER1
 ⚠️   Service type NodePort detected! Service may fail when nodes are removed from the cluster!
 ✅ Service "clustermesh-apiserver" of type "NodePort" found
@@ -127,6 +128,8 @@ ubuntu@vm:~/cilium-clustermesh-demo$ cilium clustermesh status --context $CLUSTE
 🔌 Cluster Connections:
   - cilium2: 2/2 configured, 2/2 connected
 🔀 Global services: [ min:0 / avg:0.0 / max:0 ]
+
+# Cluster 2
 ubuntu@vm:~/cilium-clustermesh-demo$ cilium clustermesh status --context $CLUSTER2
 ⚠️   Service type NodePort detected! Service may fail when nodes are removed from the cluster!
 ✅ Service "clustermesh-apiserver" of type "NodePort" found
