@@ -74,9 +74,7 @@ kube-controller-manager-cilium-control-plane   1/1     Running   0              
 kube-scheduler-cilium-control-plane            1/1     Running   0               102m
 
 # Cluster2
-
 ubuntu@vm:~/cilium-clustermesh-demo$ helm upgrade --install cilium ./charts --namespace kube-system -f ./charts/values-cluster2.yaml --force
-
 ubuntu@vm:~/cilium-clustermesh-demo$ kubectl -n kube-system get po
 NAME                                                     READY   STATUS    RESTARTS   AGE
 cilium-6z4nm                                             1/1     Running   0          10m
@@ -96,3 +94,49 @@ kube-apiserver-cilium-secondary-control-plane            1/1     Running   0    
 kube-controller-manager-cilium-secondary-control-plane   1/1     Running   0          105m
 kube-scheduler-cilium-secondary-control-plane            1/1     Running   0          105m
 ```
+
+### To connect both clusters
+
+```bash
+
+ubuntu@vm:~/cilium-clustermesh-demo$ CLUSTER1=kind-cilium
+ubuntu@vm:~/cilium-clustermesh-demo$ CLUSTER2=kind-cilium-secondary
+ubuntu@vm:~/cilium-clustermesh-demo$ cilium clustermesh connect --context $CLUSTER1 --destination-context $CLUSTER2
+✅ Detected Helm release with Cilium version 1.16.4
+✨ Extracting access information of cluster cilium2...
+🔑 Extracting secrets from cluster cilium2...
+⚠️   Service type NodePort detected! Service may fail when nodes are removed from the cluster!
+ℹ️   Found ClusterMesh service IPs: [172.20.0.5]
+✨ Extracting access information of cluster cilium...
+🔑 Extracting secrets from cluster cilium...
+⚠️   Service type NodePort detected! Service may fail when nodes are removed from the cluster!
+ℹ️   Found ClusterMesh service IPs: [172.20.0.2]
+⚠️  Cilium CA certificates do not match between clusters. Multicluster features will be limited!
+ℹ️  Configuring Cilium in cluster 'kind-cilium' to connect to cluster 'kind-cilium-secondary'
+ℹ️  Configuring Cilium in cluster 'kind-cilium-secondary' to connect to cluster 'kind-cilium'
+✅ Connected cluster kind-cilium and kind-cilium-secondary!
+
+# Double check
+ubuntu@vm:~/cilium-clustermesh-demo$ cilium clustermesh status --context $CLUSTER1
+⚠️   Service type NodePort detected! Service may fail when nodes are removed from the cluster!
+✅ Service "clustermesh-apiserver" of type "NodePort" found
+✅ Cluster access information is available:
+  - 172.20.0.2:32382
+✅ Deployment clustermesh-apiserver is ready
+✅ All 2 nodes are connected to all clusters [min:1 / avg:1.0 / max:1]
+🔌 Cluster Connections:
+  - cilium2: 2/2 configured, 2/2 connected
+🔀 Global services: [ min:0 / avg:0.0 / max:0 ]
+ubuntu@vm:~/cilium-clustermesh-demo$ cilium clustermesh status --context $CLUSTER2
+⚠️   Service type NodePort detected! Service may fail when nodes are removed from the cluster!
+✅ Service "clustermesh-apiserver" of type "NodePort" found
+✅ Cluster access information is available:
+  - 172.20.0.5:32382
+✅ Deployment clustermesh-apiserver is ready
+✅ All 2 nodes are connected to all clusters [min:1 / avg:1.0 / max:1]
+🔌 Cluster Connections:
+  - cilium: 2/2 configured, 2/2 connected
+🔀 Global services: [ min:0 / avg:0.0 / max:0 ]
+```
+
+## Test clustermesh
