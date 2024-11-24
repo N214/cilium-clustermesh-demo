@@ -212,7 +212,7 @@ ubuntu@vm:~/cilium-clustermesh-demo$ kubectl exec -it deployments/busybox-deploy
 {"message": "Hello world from Europe!"}
 ```
 
-### Cilium fault tolerant cross cluster load balancing.
+### Cilium fault tolerant cross cluster load balancing
 
 Adding the annotation below from the cluster1 will make service in the cluster1 the primary one. So all traffic goes to him, however, in case the service in cluster1 became unavailable, all traffic should be redirected to cluster2.
 
